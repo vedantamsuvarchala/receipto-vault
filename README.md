@@ -5,7 +5,7 @@ This Receipto is an AI agent which works as a receipt manager in the busy schedu
 
 ## Project info
 
-**URL**: https://lovable.dev/projects/78b754ba-31f9-4f08-97da-00f348b7e60b
+**URL**: https://receipto-snap-sync.lovable.app
 
 
 **Use Lovable**
