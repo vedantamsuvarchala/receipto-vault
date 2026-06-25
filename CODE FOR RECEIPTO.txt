@@ -1,0 +1,713 @@
+import React, { useState } from 'react';
+import { 
+  Camera, 
+  Scan, 
+  MessageCircle, 
+  Wallet, 
+  Bell, 
+  Home, 
+  Receipt, 
+  TrendingUp, 
+  Plus,
+  Settings,
+  User,
+  ShoppingBag,
+  DollarSign,
+  BarChart3,
+  Zap,
+  Star,
+  ArrowRight,
+  Upload,
+  Eye,
+  Bot,
+  CreditCard,
+  Smartphone,
+  CheckCircle,
+  AlertCircle
+} from 'lucide-react';
+
+import { CameraCapture } from './components/CameraCapture';
+import { PhotoUpload } from './components/PhotoUpload';
+import { ReceiptDetails } from './components/ReceiptDetails';
+import { MonthlyBillingCard } from './components/MonthlyBilling';
+import { useReceipts } from './hooks/useReceipts';
+import { Receipt as ReceiptType } from './types';
+
+function App() {
+  const [activeTab, setActiveTab] = useState('home');
+  const [showScanModal, setShowScanModal] = useState(false);
+  const [showCameraCapture, setShowCameraCapture] = useState(false);
+  const [showPhotoUpload, setShowPhotoUpload] = useState(false);
+  const [showReceiptDetails, setShowReceiptDetails] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [currentReceipt, setCurrentReceipt] = useState<ReceiptType | null>(null);
+
+  const { 
+    receipts, 
+    walletPasses, 
+    monthlyBilling, 
+    addReceipt, 
+    processReceiptImage,
+    resetMonthlyBilling 
+  } = useReceipts();
+
+  const TabButton = ({ id, icon: Icon, label, isActive, onClick }: any) => (
+    <button
+      onClick={() => onClick(id)}
+      className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 ${
+        isActive 
+          ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg' 
+          : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50'
+      }`}
+    >
+      <Icon className="w-5 h-5 mb-1" />
+      <span className="text-xs font-medium">{label}</span>
+    </button>
+  );
+
+  const FeatureCard = ({ icon: Icon, title, description, color }: any) => (
+    <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100">
+      <div className={`w-12 h-12 ${color} rounded-xl flex items-center justify-center mb-4`}>
+        <Icon className="w-6 h-6 text-white" />
+      </div>
+      <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
+      <p className="text-gray-600 text-sm leading-relaxed">{description}</p>
+    </div>
+  );
+
+  const StatCard = ({ icon: Icon, value, label, trend }: any) => (
+    <div className="bg-white rounded-xl p-4 shadow-md border border-gray-100">
+      <div className="flex items-center justify-between mb-2">
+        <Icon className="w-5 h-5 text-purple-600" />
+        {trend && <span className="text-xs text-green-600 font-medium">+{trend}%</span>}
+      </div>
+      <div className="text-2xl font-bold text-gray-900 mb-1">{value}</div>
+      <div className="text-xs text-gray-600">{label}</div>
+    </div>
+  );
+
+  const RecentReceiptCard = ({ receipt }: { receipt: ReceiptType }) => (
+    <div 
+      onClick={() => {
+        setCurrentReceipt(receipt);
+        setShowReceiptDetails(true);
+      }}
+      className="bg-white rounded-xl p-4 shadow-md border border-gray-100 hover:shadow-lg transition-all cursor-pointer"
+    >
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
+            <Receipt className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <div className="font-semibold text-gray-900">{receipt.merchant}</div>
+            <div className="text-xs text-gray-500">{receipt.date}</div>
+          </div>
+        </div>
+        <div className="text-right">
+          <div className="font-bold text-gray-900">${receipt.amount.toFixed(2)}</div>
+          <div className="text-xs text-gray-500">{receipt.items.length} items</div>
+        </div>
+      </div>
+      {receipt.walletSynced && (
+        <div className="flex items-center space-x-1 mt-2">
+          <CheckCircle className="w-3 h-3 text-green-500" />
+          <span className="text-xs text-green-600 font-medium">Synced to Wallet</span>
+        </div>
+      )}
+    </div>
+  );
+
+  const handleImageCapture = async (imageData: string) => {
+    setIsProcessing(true);
+    setShowCameraCapture(false);
+    setShowPhotoUpload(false);
+    
+    try {
+      const extractedData = await processReceiptImage(imageData);
+      setCurrentReceipt(extractedData);
+      setShowReceiptDetails(true);
+    } catch (error) {
+      console.error('Error processing receipt:', error);
+      alert('Failed to process receipt. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleReceiptConfirm = () => {
+    if (currentReceipt) {
+      addReceipt(currentReceipt);
+      setShowReceiptDetails(false);
+      setCurrentReceipt(null);
+      setActiveTab('home');
+    }
+  };
+
+  const handlePayNow = () => {
+    if (monthlyBilling) {
+      // Simulate payment processing
+      setTimeout(() => {
+        resetMonthlyBilling();
+        alert('Payment processed successfully!');
+      }, 1000);
+    }
+  };
+
+  const renderHomeScreen = () => (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Welcome back!</h1>
+          <p className="text-gray-600">Track your expenses effortlessly</p>
+        </div>
+        <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center">
+          <User className="w-5 h-5 text-white" />
+        </div>
+      </div>
+
+      {/* Monthly Billing Alert */}
+      {monthlyBilling && !monthlyBilling.isPaid && (
+        <MonthlyBillingCard 
+          billing={monthlyBilling}
+          onPayNow={handlePayNow}
+          onViewDetails={() => setActiveTab('wallet')}
+        />
+      )}
+
+      {/* Quick Stats */}
+      <div className="grid grid-cols-2 gap-4">
+        <StatCard 
+          icon={DollarSign} 
+          value={`$${monthlyBilling?.totalSpent.toFixed(2) || '0.00'}`} 
+          label="This Month" 
+          trend={receipts.length > 0 ? "12" : undefined} 
+        />
+        <StatCard 
+          icon={Receipt} 
+          value={monthlyBilling?.receiptsCount || 0} 
+          label="Receipts" 
+          trend={receipts.length > 0 ? "8" : undefined} 
+        />
+        <StatCard 
+          icon={ShoppingBag} 
+          value={receipts.reduce((sum, r) => sum + r.items.length, 0)} 
+          label="Items Tracked" 
+        />
+        <StatCard 
+          icon={Wallet} 
+          value={monthlyBilling?.walletPasses || 0} 
+          label="Wallet Passes" 
+        />
+      </div>
+
+      {/* Quick Actions */}
+      <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl p-6 text-white">
+        <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <button 
+            onClick={() => setShowScanModal(true)}
+            className="bg-white/20 backdrop-blur-sm rounded-xl p-4 hover:bg-white/30 transition-colors"
+          >
+            <Camera className="w-6 h-6 mb-2" />
+            <div className="text-sm font-medium">Scan Receipt</div>
+          </button>
+          <button 
+            onClick={() => setActiveTab('chat')}
+            className="bg-white/20 backdrop-blur-sm rounded-xl p-4 hover:bg-white/30 transition-colors"
+          >
+            <MessageCircle className="w-6 h-6 mb-2" />
+            <div className="text-sm font-medium">Ask AI</div>
+          </button>
+        </div>
+      </div>
+
+      {/* Recent Receipts */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">Recent Receipts</h3>
+          <button 
+            onClick={() => setActiveTab('analytics')}
+            className="text-purple-600 text-sm font-medium"
+          >
+            View All
+          </button>
+        </div>
+        <div className="space-y-3">
+          {receipts.length > 0 ? (
+            receipts.slice(0, 3).map(receipt => (
+              <RecentReceiptCard key={receipt.id} receipt={receipt} />
+            ))
+          ) : (
+            <div className="bg-gray-50 rounded-xl p-6 text-center">
+              <Receipt className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+              <p className="text-gray-600 font-medium">No receipts yet</p>
+              <p className="text-gray-500 text-sm">Start by scanning your first receipt!</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderScanScreen = () => (
+    <div className="space-y-6">
+      <div className="text-center">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Scan Receipt</h2>
+        <p className="text-gray-600">Capture your receipt to extract data automatically</p>
+      </div>
+
+      {/* Scan Options */}
+      <div className="space-y-4">
+        <button 
+          onClick={() => setShowCameraCapture(true)}
+          className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-4 rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition-all duration-200 shadow-lg flex items-center justify-center space-x-3"
+        >
+          <Camera className="w-6 h-6" />
+          <span>Take Photo</span>
+        </button>
+        
+        <button 
+          onClick={() => setShowPhotoUpload(true)}
+          className="w-full bg-white text-gray-700 py-4 rounded-xl font-semibold border-2 border-gray-300 hover:bg-gray-50 hover:border-purple-300 transition-all flex items-center justify-center space-x-3"
+        >
+          <Upload className="w-6 h-6" />
+          <span>Upload from Gallery</span>
+        </button>
+      </div>
+
+      {/* AI Features */}
+      <div className="grid grid-cols-1 gap-4">
+        <FeatureCard 
+          icon={Zap} 
+          title="AI-Powered Extraction" 
+          description="Automatically extract items, prices, and merchant details with 95% accuracy"
+          color="bg-gradient-to-r from-yellow-500 to-orange-500"
+        />
+        <FeatureCard 
+          icon={Bot} 
+          title="Smart Categorization" 
+          description="Intelligently categorize expenses and sync to Google Wallet instantly"
+          color="bg-gradient-to-r from-green-500 to-emerald-500"
+        />
+        <FeatureCard 
+          icon={Wallet} 
+          title="Auto Wallet Sync" 
+          description="Receipts are automatically added to Google Wallet for easy access"
+          color="bg-gradient-to-r from-blue-500 to-indigo-500"
+        />
+      </div>
+
+      {/* Recent Activity */}
+      {receipts.length > 0 && (
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Scans</h3>
+          <div className="space-y-3">
+            {receipts.slice(0, 2).map(receipt => (
+              <RecentReceiptCard key={receipt.id} receipt={receipt} />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderChatScreen = () => (
+    <div className="space-y-6">
+      <div className="text-center">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">AI Assistant</h2>
+        <p className="text-gray-600">Ask questions about your spending and receipts</p>
+      </div>
+
+      {/* Chat Messages */}
+      <div className="space-y-4 max-h-96 overflow-y-auto">
+        <div className="flex items-start space-x-3">
+          <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center">
+            <Bot className="w-4 h-4 text-white" />
+          </div>
+          <div className="bg-gray-100 rounded-2xl rounded-tl-sm p-4 max-w-xs">
+            <p className="text-sm text-gray-800">Hi! I can help you analyze your spending, suggest recipes based on your purchases, and answer questions about your receipts. I also track your monthly billing automatically!</p>
+          </div>
+        </div>
+
+        {receipts.length > 0 && (
+          <>
+            <div className="flex items-start space-x-3 justify-end">
+              <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl rounded-tr-sm p-4 max-w-xs">
+                <p className="text-sm text-white">What did I spend this month?</p>
+              </div>
+            </div>
+
+            <div className="flex items-start space-x-3">
+              <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center">
+                <Bot className="w-4 h-4 text-white" />
+              </div>
+              <div className="bg-gray-100 rounded-2xl rounded-tl-sm p-4 max-w-xs">
+                <p className="text-sm text-gray-800">
+                  You've spent ${monthlyBilling?.totalSpent.toFixed(2)} this month across {monthlyBilling?.receiptsCount} receipts. 
+                  Your most recent purchase was at {receipts[0]?.merchant} for ${receipts[0]?.amount.toFixed(2)}.
+                </p>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Quick Questions */}
+      <div>
+        <h3 className="text-sm font-semibold text-gray-700 mb-3">Quick Questions</h3>
+        <div className="space-y-2">
+          <button className="w-full text-left bg-white border border-gray-200 rounded-xl p-3 hover:bg-gray-50 transition-colors">
+            <span className="text-sm text-gray-700">What can I cook with my recent purchases?</span>
+          </button>
+          <button className="w-full text-left bg-white border border-gray-200 rounded-xl p-3 hover:bg-gray-50 transition-colors">
+            <span className="text-sm text-gray-700">Show my grocery spending trend</span>
+          </button>
+          <button className="w-full text-left bg-white border border-gray-200 rounded-xl p-3 hover:bg-gray-50 transition-colors">
+            <span className="text-sm text-gray-700">When is my next billing due?</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Chat Input */}
+      <div className="flex items-center space-x-2">
+        <input 
+          type="text" 
+          placeholder="Ask me anything about your receipts..."
+          className="flex-1 bg-white border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+        />
+        <button className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-3 rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all duration-200">
+          <ArrowRight className="w-5 h-5" />
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderWalletScreen = () => (
+    <div className="space-y-6">
+      <div className="text-center">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Google Wallet</h2>
+        <p className="text-gray-600">Your receipts and passes synced automatically</p>
+      </div>
+
+      {/* Monthly Billing */}
+      {monthlyBilling && (
+        <MonthlyBillingCard 
+          billing={monthlyBilling}
+          onPayNow={handlePayNow}
+          onViewDetails={() => setActiveTab('analytics')}
+        />
+      )}
+
+      {/* Wallet Integration Status */}
+      <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl p-6 text-white">
+        <div className="flex items-center space-x-3 mb-4">
+          <Wallet className="w-8 h-8" />
+          <div>
+            <h3 className="text-lg font-semibold">Connected to Google Wallet</h3>
+            <p className="text-green-100 text-sm">All receipts are automatically synced</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-sm">Last sync: Just now</span>
+          <div className="flex items-center space-x-2">
+            <CheckCircle className="w-4 h-4" />
+            <span className="text-sm font-medium">{walletPasses.length} passes synced</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Digital Passes */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Digital Passes</h3>
+        <div className="space-y-3">
+          {walletPasses.length > 0 ? (
+            walletPasses.map(pass => (
+              <div key={pass.id} className="bg-white rounded-xl p-4 shadow-md border border-gray-100 hover:shadow-lg transition-shadow">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
+                      <Receipt className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <div className="font-semibold text-gray-900">{pass.title}</div>
+                      <div className="text-xs text-gray-500">Added {pass.addedDate}</div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    {pass.amount && (
+                      <div className="font-bold text-gray-900">${pass.amount.toFixed(2)}</div>
+                    )}
+                    <Eye className="w-4 h-4 text-gray-400 ml-auto mt-1" />
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="bg-gray-50 rounded-xl p-6 text-center">
+              <Wallet className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+              <p className="text-gray-600 font-medium">No wallet passes yet</p>
+              <p className="text-gray-500 text-sm">Scan receipts to automatically add them to your wallet</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Wallet Features */}
+      <div className="grid grid-cols-1 gap-4">
+        <FeatureCard 
+          icon={Smartphone} 
+          title="Instant Access" 
+          description="Access your receipts directly from Google Wallet on any device"
+          color="bg-gradient-to-r from-blue-500 to-indigo-500"
+        />
+        <FeatureCard 
+          icon={Bell} 
+          title="Smart Notifications" 
+          description="Get notified about monthly billing and spending patterns"
+          color="bg-gradient-to-r from-purple-500 to-pink-500"
+        />
+      </div>
+    </div>
+  );
+
+  const renderAnalyticsScreen = () => (
+    <div className="space-y-6">
+      <div className="text-center">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Analytics</h2>
+        <p className="text-gray-600">Insights into your spending patterns</p>
+      </div>
+
+      {/* Monthly Overview */}
+      <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl p-6 text-white">
+        <h3 className="text-lg font-semibold mb-4">This Month</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <div className="text-3xl font-bold">${monthlyBilling?.totalSpent.toFixed(2) || '0.00'}</div>
+            <div className="text-purple-100 text-sm">Total Spent</div>
+          </div>
+          <div>
+            <div className="text-3xl font-bold">{monthlyBilling?.receiptsCount || 0}</div>
+            <div className="text-purple-100 text-sm">Receipts</div>
+          </div>
+        </div>
+      </div>
+
+      {/* All Receipts */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">All Receipts</h3>
+        <div className="space-y-3">
+          {receipts.length > 0 ? (
+            receipts.map(receipt => (
+              <RecentReceiptCard key={receipt.id} receipt={receipt} />
+            ))
+          ) : (
+            <div className="bg-gray-50 rounded-xl p-6 text-center">
+              <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+              <p className="text-gray-600 font-medium">No data to analyze yet</p>
+              <p className="text-gray-500 text-sm">Start scanning receipts to see insights</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Insights */}
+      {receipts.length > 0 && (
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Smart Insights</h3>
+          <div className="space-y-3">
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+              <div className="flex items-start space-x-3">
+                <TrendingUp className="w-5 h-5 text-blue-600 mt-0.5" />
+                <div>
+                  <div className="font-medium text-blue-900">Monthly Progress</div>
+                  <div className="text-sm text-blue-700">
+                    You've scanned {receipts.length} receipts this month
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+              <div className="flex items-start space-x-3">
+                <Star className="w-5 h-5 text-green-600 mt-0.5" />
+                <div>
+                  <div className="font-medium text-green-900">Wallet Integration</div>
+                  <div className="text-sm text-green-700">
+                    {walletPasses.length} receipts synced to Google Wallet
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'home': return renderHomeScreen();
+      case 'scan': return renderScanScreen();
+      case 'chat': return renderChatScreen();
+      case 'wallet': return renderWalletScreen();
+      case 'analytics': return renderAnalyticsScreen();
+      default: return renderHomeScreen();
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
+      {/* Mobile App Container */}
+      <div className="max-w-md mx-auto bg-white min-h-screen shadow-2xl relative">
+        {/* Status Bar */}
+        <div className="bg-gradient-to-r from-purple-600 to-blue-600 h-6 flex items-center justify-center">
+          <div className="text-white text-xs font-medium">Receipto</div>
+        </div>
+
+        {/* Header */}
+        <div className="bg-white border-b border-gray-100 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
+                <Receipt className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                Receipto
+              </span>
+            </div>
+            <div className="flex items-center space-x-3">
+              <button className="relative p-2 text-gray-600 hover:text-purple-600 transition-colors">
+                <Bell className="w-5 h-5" />
+                {monthlyBilling && !monthlyBilling.isPaid && (
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></div>
+                )}
+              </button>
+              <button className="p-2 text-gray-600 hover:text-purple-600 transition-colors">
+                <Settings className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="px-6 py-6 pb-24 overflow-y-auto" style={{height: 'calc(100vh - 140px)'}}>
+          {renderContent()}
+        </div>
+
+        {/* Floating Scan Button */}
+        <button 
+          onClick={() => setShowScanModal(true)}
+          className="absolute bottom-20 right-6 w-14 h-14 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center transform hover:scale-105"
+        >
+          <Plus className="w-6 h-6 text-white" />
+        </button>
+
+        {/* Bottom Navigation */}
+        <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-3">
+          <div className="grid grid-cols-5 gap-2">
+            <TabButton id="home" icon={Home} label="Home" isActive={activeTab === 'home'} onClick={setActiveTab} />
+            <TabButton id="scan" icon={Scan} label="Scan" isActive={activeTab === 'scan'} onClick={setActiveTab} />
+            <TabButton id="chat" icon={MessageCircle} label="AI Chat" isActive={activeTab === 'chat'} onClick={setActiveTab} />
+            <TabButton id="wallet" icon={Wallet} label="Wallet" isActive={activeTab === 'wallet'} onClick={setActiveTab} />
+            <TabButton id="analytics" icon={BarChart3} label="Analytics" isActive={activeTab === 'analytics'} onClick={setActiveTab} />
+          </div>
+        </div>
+      </div>
+
+      {/* Scan Modal */}
+      {showScanModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full">
+            <div className="text-center mb-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Scan Receipt</h3>
+              <p className="text-gray-600">Choose how to capture your receipt</p>
+            </div>
+            
+            <div className="space-y-3">
+              <button 
+                onClick={() => {
+                  setShowScanModal(false);
+                  setShowCameraCapture(true);
+                }}
+                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition-all duration-200 flex items-center justify-center space-x-2"
+              >
+                <Camera className="w-5 h-5" />
+                <span>Take Photo</span>
+              </button>
+              <button 
+                onClick={() => {
+                  setShowScanModal(false);
+                  setShowPhotoUpload(true);
+                }}
+                className="w-full bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-colors flex items-center justify-center space-x-2"
+              >
+                <Upload className="w-5 h-5" />
+                <span>Upload from Gallery</span>
+              </button>
+              <button 
+                onClick={() => setShowScanModal(false)}
+                className="w-full text-gray-500 py-2 font-medium"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Camera Capture */}
+      {showCameraCapture && (
+        <CameraCapture
+          onCapture={handleImageCapture}
+          onClose={() => setShowCameraCapture(false)}
+          isProcessing={isProcessing}
+        />
+      )}
+
+      {/* Photo Upload */}
+      {showPhotoUpload && (
+        <PhotoUpload
+          onUpload={handleImageCapture}
+          onClose={() => setShowPhotoUpload(false)}
+          isProcessing={isProcessing}
+        />
+      )}
+
+      {/* Receipt Details */}
+      {showReceiptDetails && currentReceipt && (
+        <ReceiptDetails
+          receipt={currentReceipt}
+          onConfirm={handleReceiptConfirm}
+          onEdit={(receipt) => {
+            setCurrentReceipt(receipt);
+            // Could implement edit functionality here
+          }}
+          onClose={() => {
+            setShowReceiptDetails(false);
+            setCurrentReceipt(null);
+          }}
+        />
+      )}
+
+      {/* Processing Overlay */}
+      {isProcessing && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-40">
+          <div className="bg-white rounded-2xl p-8 text-center max-w-sm mx-4">
+            <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+              <Zap className="w-8 h-8 text-white" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Processing Receipt</h3>
+            <p className="text-gray-600 text-sm">AI is extracting data from your receipt...</p>
+            <div className="mt-4 flex justify-center">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default App;
